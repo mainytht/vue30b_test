@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<script src="https://s1.zhuanstatic.com/common/js/vue-next-3.0.0-alpha.0.js"></script>
+<div id="app"></div>
+<script>
+  const { ref, reactive, createApp, watch, effect } = Vue
+
+  function useMouse() {
+    const x = ref(0)
+    const y = ref(0)
+
+    const update = e => {
+      x.value = e.pageX
+      y.value = e.pageY
+    }
+
+    Vue.onMounted(() => {
+      window.addEventListener('mousemove', update)
+    })
+
+    Vue.onUnmounted(() => {
+      window.removeEventListener('mousemove', update)
+    })
+
+    return { x, y }
+  }
+
+  const App = {
+    props: {
+      age: Number
+    },
+    // Composition API 使用的入口
+    setup(props, context){
+      console.log('props.age', props.age)
+      // 定义响应数据
+      const state  = reactive({name:'zhuanzhuan'});
+      // 使用公共逻辑
+      const {x,y} = useMouse();
+
+      Vue.onMounted(()=>{
+        console.log('当组挂载完成')
+      });
+      Vue.onUpdated(()=>{
+        console.log('数据发生更新')
+      });
+      Vue.onUnmounted(()=>{
+        console.log('组件将要卸载')
+      })
+
+      function changeName(){
+        state.name = '转转';
+      }
+
+      // 创建监视，并得到 停止函数
+      const stop = watch(() => console.log(`watch state.name：`, state.name))
+      // 调用停止函数，清除对应的监视
+      // stop()
+
+      // 观察包装对象
+      watch(() => state.name, (value, oldValue) => console.log(`watch state.name value:${value} oldValue:${oldValue}`))
+
+      effect(() => {
+        console.log(`effect 触发了! 名字是：${state.name}，年龄：${props.age}`)
+      })
+
+      // 返回上下文,可以在模板中使用
+      return {
+        // state: Vue.toRefs(state), // 也可以这样写，将 state 上的每个属性，都转化为 ref 形式的响应式数据
+        state,
+        x,
+        y,
+        changeName,
+      }
+    },
+    template:`<button @click="changeName">名字是：{{state.name}} 鼠标x: {{x}} 鼠标: {{y}}</button>`
+  }
+
+  createApp().mount(App, '#app', {age: 123});
+</script>
+</body>
+</html>
